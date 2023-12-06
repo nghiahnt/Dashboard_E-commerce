@@ -232,22 +232,14 @@ function Products() {
     };
 
     const file = {
-      path: image ? image.base64StringImg : "",
-      filename: image ? image.file.name : "",
+
     };
 
     // Transform to formData
-    const formData = objectToFormData({newProduct});
-    // formData.append("file", file);
-
-    // Show Data
-    // formData.forEach((value, key) => {
-    //   console.log(key, value);
-    // });
-    console.log(newProduct.PRODUCT_ATTRIBUTE);
+    const formData = objectToFormData(newProduct);
 
     // Post API
-    // createNewProduct(file);
+    // createNewProduct();
   };
 
   return (
