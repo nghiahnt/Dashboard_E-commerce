@@ -1,0 +1,21 @@
+ const file = image.file;
+    console.log("Old file: ", file);
+
+    if (file) {
+      const objectData = {
+        path: "/new/path",
+        name: "example.txt",
+        type: "text/plain",
+        content: "Hello, world!",
+      };
+
+      const blob = new Blob([objectData.content], { type: objectData.type });
+
+      const modifiedFile = new File([blob], objectData.name, {
+        type: objectData.type,
+      });
+      modifiedFile.path = objectData.path;
+
+      // image.file = modifiedFile;
+      console.log("New File", modifiedFile);
+    }

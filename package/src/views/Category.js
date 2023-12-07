@@ -13,20 +13,29 @@ import {
 import axios from "axios";
 import { useEffect, useState } from "react";
 const Menu = () => {
+  // Id category
+  const [id, setId] = useState(null);
+
   // Add categories
   const [show, setShow] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   // Categories
   const [title, setTitle] = useState("");
   const [parentID, setParentID] = useState("");
   const [CD, setCD] = useState("");
 
+  // Category by id
+  const [categoryId, setCategoryId] = useState(null);
+
   // Form add categories
   const renderAddForm = () => {
     return (
       <div className="card mt-4">
         <div className="card-body">
-          <h4 className="card-title">Add category</h4>
+          <h4 className="card-title">
+            {showEdit ? "Edit Category" : "Add category"}
+          </h4>
           <form onSubmit={handleSubmitForm}>
             <div className="mb-3">
               <label htmlFor="titleInput" className="form-label">
@@ -76,16 +85,74 @@ const Menu = () => {
     );
   };
 
-  const handleSubmitForm = (e) => {
+  // Handler
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
-    const newCategory = {
-      TITLE: title,
-      PARENT_ID: parentID,
-      CD: CD,
-    };
+    if (showEdit === true) {
+      // Patch
+      const editData = {
+        TITLE: title,
+        PARENT_ID: parentID,
+        CD: CD,
+      };
+      console.log(id);
+      console.log(editData);
+      const response = await axios.patch(
+        `https://ecommerce-camping.onrender.com/api/category/updateCategory/${id}`,
+        editData
+      );
+      const resData = await response.data;
+      console.log(resData);
+      setShow(false);
+      window.alert("Message", "Updated category successfully");
+      window.location.reload();
+    } else {
+      const newCategory = {
+        TITLE: title,
+        PARENT_ID: parentID,
+        CD: CD,
+      };
 
-    createCategory(newCategory);
-    // console.log(newCategory);
+      createCategory(newCategory);
+      // console.log(newCategory);
+    }
+  };
+
+  // Handle Edit
+  const handleEdit = async (id) => {
+    setShow(!show);
+    show ? setShowEdit(false) : setShowEdit(true);
+    setId(id);
+
+    try {
+      // Get the category follow id
+      const res = await axios.get(
+        `https://ecommerce-camping.onrender.com/api/category/getCategoryId/${id}`
+      );
+      setCategoryId(res.data.elements);
+    } catch (error) {
+      console.log(error);
+    }
+    if (!!categoryId) {
+      setTitle(categoryId.TITLE);
+      setParentID(categoryId.PARENT_ID);
+      setCD(categoryId.CD);
+    }
+  };
+
+  // Handle Delete
+  const handleDelete = async (id) => {
+    console.log(id); // ok
+    try {
+      const res = await axios.delete(
+        `https://ecommerce-camping.onrender.com/api/category/deleteCategory/${id}`
+      );
+      console.log("Delete category successfully", res.data);
+      window.alert("Notification", "Delete category successfully");
+      window.location.reload();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleShow = () => {
@@ -126,13 +193,11 @@ const Menu = () => {
     }
   };
 
-  console.log(category);
-
   return (
     <div className="menu">
       <div className="add-menu mb-2">
         <Button className="btn" color="success" onClick={handleShow}>
-          Add Category
+          {showEdit ? "Edit Category" : "Add Category"}
         </Button>
       </div>
 
@@ -194,9 +259,11 @@ const Menu = () => {
                       </tr>
 
                       {category === null ? (
-                        <>
-                          <h5 className="mt-4">Loading...</h5>
-                        </>
+                        <tr>
+                          <td>
+                            <h5 className="mt-4">Loading...</h5>
+                          </td>
+                        </tr>
                       ) : (
                         category.map((item, index) => {
                           return (
@@ -224,10 +291,16 @@ const Menu = () => {
                               <td className="d-flex justify-content-between">
                                 <h6>Almost out of stock</h6>
                                 <div>
-                                  <button className="btn btn-primary">
+                                  <button
+                                    className="btn btn-primary"
+                                    onClick={() => handleEdit(item.id)}
+                                  >
                                     Edit
                                   </button>
-                                  <button className="btn btn-danger ms-3">
+                                  <button
+                                    className="btn btn-danger ms-3"
+                                    onClick={() => handleDelete(item.id)}
+                                  >
                                     Delete
                                   </button>
                                 </div>

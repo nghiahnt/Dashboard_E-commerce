@@ -19,6 +19,7 @@ const Login = lazy(() => import("../views/Login.js"));
 const Menu = lazy(() => import("../views/Menu.js"));
 const Category = lazy(() => import("../views/Category.js"));
 const Products = lazy(() => import("../views/Products.js"));
+const Blog = lazy(() => import("../views/Blog.js"))
 /*****Routes******/
 
 const ThemeRoutes = [
@@ -42,7 +43,8 @@ const ThemeRoutes = [
       { path: "/grid", exact: true, element: <Grid /> },
       { path: "/table", exact: true, element: <Tables /> },
       { path: "/forms", exact: true, element: <Forms /> },
-      { path: "product", exact: true, element: <Products /> },
+      { path: "/product", exact: true, element: <Products /> },
+      { path: "/blog", exact: true, element: <Blog /> },
     ],
   },
 ];

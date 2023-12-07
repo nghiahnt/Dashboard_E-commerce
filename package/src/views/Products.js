@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 
 import {
   Button,
@@ -30,8 +30,8 @@ function Products() {
   const [productAttributes, setProductAttributes] = useState("");
 
   // Key - value of product attribute
-  const [KEY, setKEY] = useState("KEY");
-  const [VALUE, setVALUE] = useState("VALUE");
+  const [KEY, setKEY] = useState("color");
+  const [VALUE, setVALUE] = useState("hat");
 
   // Get the products from API
   const [products, setProducts] = useState(null);
@@ -41,8 +41,8 @@ function Products() {
         const response = await axios.get(
           "https://ecommerce-camping.onrender.com/api/product/getAllProduct"
         );
-
         setProducts(response.data.elements);
+        // Preventive api: https://fakestoreapi.com/products
       } catch (error) {
         console.log("Error during fetching products:", error);
       }
@@ -213,6 +213,7 @@ function Products() {
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
+
     const newProduct = {
       NAME: name,
       PRICE: price,
@@ -231,15 +232,13 @@ function Products() {
       ],
     };
 
-    const file = {
+    image.file.path = "abc"
 
-    };
-
-    // Transform to formData
-    const formData = objectToFormData(newProduct);
+    const fileData = new FormData();
+    fileData.append("file", image.file); // Get the req.file ok
 
     // Post API
-    // createNewProduct();
+    createNewProduct(fileData);
   };
 
   return (
