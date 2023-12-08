@@ -29,7 +29,8 @@ const Menu = () => {
   const [categoryId, setCategoryId] = useState(null);
 
   // Form add categories
-  const renderAddForm = () => {
+  const renderAddForm = (data) => {
+    console.log(parentID);
     return (
       <div className="card mt-4">
         <div className="card-body">
@@ -54,14 +55,26 @@ const Menu = () => {
               <label htmlFor="parentIdInput" className="form-label">
                 Parent ID
               </label>
-              <input
+              <select
+                className="form-control"
+                id="parentIdInput"
+                value={parentID}
+                onChange={(e) => setParentID(e.target.value)}
+              >
+                {data.map((item, index) => (
+                  <option value={item.PARENT_ID} key={index}>
+                    {item.PARENT_ID}
+                  </option>
+                ))}
+              </select>
+              {/* <input
                 type="text"
                 className="form-control"
                 id="parentIdInput"
                 placeholder="Enter parent ID"
                 value={parentID}
                 onChange={(e) => setParentID(e.target.value)}
-              />
+              /> */}
             </div>
             <div className="mb-3">
               <label htmlFor="cdInput" className="form-label">
@@ -86,6 +99,7 @@ const Menu = () => {
   };
 
   // Handler
+  // Handle submitform
   const handleSubmitForm = async (e) => {
     e.preventDefault();
     if (showEdit === true) {
@@ -161,14 +175,17 @@ const Menu = () => {
 
   // Get category
   const [category, setCategory] = useState(null);
-
+  console.log(category);
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const response = await axios.get(
-          "https://ecommerce-camping.onrender.com/api/category/getAllCategory"
-        );
-        setCategory(response.data.elements);
+        await axios
+          .get(
+            "https://ecommerce-camping.onrender.com/api/category/getAllCategory"
+          )
+          .then((res) => {
+            setCategory(res.data.elements);
+          });
       } catch (error) {
         console.log("Error during fetching category:", error);
       }
@@ -201,7 +218,7 @@ const Menu = () => {
         </Button>
       </div>
 
-      {show && renderAddForm()}
+      {show && renderAddForm(category)}
 
       <div className="menu-table">
         <div className="box-menu-table">

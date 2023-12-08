@@ -14,10 +14,16 @@ import {
 
 function Products() {
   // Handle show the renderForm
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [id, setId] = useState(null);
 
   const handleOpen = () => {
     setShow(!show);
+    if (showEdit === true) {
+      setShow(false);
+      setShowEdit(false);
+    }
   };
 
   // Initialize state form product
@@ -33,39 +39,119 @@ function Products() {
   const [KEY, setKEY] = useState("color");
   const [VALUE, setVALUE] = useState("hat");
 
-  // Get the products from API
-  const [products, setProducts] = useState(null);
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get(
-          "https://ecommerce-camping.onrender.com/api/product/getAllProduct"
-        );
-        setProducts(response.data.elements);
-        // Preventive api: https://fakestoreapi.com/products
-      } catch (error) {
-        console.log("Error during fetching products:", error);
-      }
-    };
+    return () => {
+      image && URL.revokeObjectURL(image.preview)
+    }
+  }, [image])
 
-    fetchProducts();
-  }, [show]);
+  const handlePreviewImg = (e) => {
+    const file = e.target.files[0];
+    file.preview = URL.createObjectURL(file);
+    setImage(file);
+  }
+
+  // Get the products from API - ok
+  const [products, setProducts] = useState(null);
+  // API doesn't exist data - change "true" if have "data"
+  const [mainAPI, setMainAPI] = useState(false);
+  useEffect(() => {
+    if (mainAPI) {
+      axios
+        .get("https://ecommerce-camping.onrender.com/api/product/getAllProduct")
+        .then((res) => {
+          setProducts(res.data.elements);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    } else {
+      axios
+        .get("https://fakestoreapi.com/products")
+        .then((res) => {
+          const data = res.data;
+          setProducts(data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, [products, mainAPI]);
   // console.log(products);
 
-  // Post the products
-  const createNewProduct = async (productData) => {
-    try {
-      const response = await axios.post(
+  // Post the products - not ok
+  const handleAddProduct = (productData) => {
+    axios
+      .post(
         "https://ecommerce-camping.onrender.com/api/product/createProduct",
         productData
-      );
+      )
+      .then((res) => {
+        alert("Successfully", "Add new Product successfully");
+        setShow(false);
+        console.log("Product created: ", res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
-      alert("Successfully", "Add new Product successfully");
-      setShow(false);
-      const data = await response.data;
-      console.log("Product created: ", data);
-    } catch (error) {
-      console.log("Error during new product: ", error);
+  // Delete a Product
+  const handleDelete = (id) => {
+    axios
+      .delete(
+        `https://ecommerce-camping.onrender.com/api/product/deleteProduct/${id}`
+      )
+      .then((res) => {
+        console.log(res);
+        window.alert("Message", "Product deleted successfully");
+        window.location.reload();
+      })
+      .catch((err) => console.log(err));
+  };
+
+  // Patch a Product
+  const [productById, setProductById] = useState(null);
+  const idData = (id) => {
+    setId(id);
+    setShowEdit(true);
+    setShow(true);
+    // Fetch API product with id to render to form edit
+    axios
+      .get(
+        `https://ecommerce-camping.onrender.com/api/product/getProductId/${id}`
+      )
+      .then((res) => {
+        const data = res.data.elements;
+        setProductById(data);
+      })
+      .catch((err) => console.log(err));
+  };
+  const handlePatch = (id, data) => {
+    axios
+      .patch(
+        `https://ecommerce-camping.onrender.com/api/product/updateProduct/${id}`,
+        data
+      )
+      .then((res) => {
+        console.log(res.data);
+        window.alert("Message", "Product updated successfully");
+        window.location.reload();
+      })
+      .catch((err) => console.log(err));
+  };
+
+  // Submit from edit or add to product
+  const handleSubmitForm = (e) => {
+    e.preventDefault();
+    if (showEdit) {
+      // Form edit - send edit data to server
+      // const data = {} // Edited data
+      // handlePatch(id, data);
+    } else {
+      // Form add - send add data to server
+      // const data = {} // Added data
+      // handleAddProduct(data)
     }
   };
 
@@ -74,7 +160,9 @@ function Products() {
     return (
       <div className="card mt-4">
         <div className="card-body">
-          <h4 className="card-title">Add Product</h4>
+          <h4 className="card-title">
+            {showEdit ? "Edit product" : "Add product"}
+          </h4>
           <form onSubmit={handleSubmitForm}>
             <div className="mb-3">
               <label htmlFor="nameInput" className="form-label">
@@ -165,13 +253,11 @@ function Products() {
                 type="file"
                 className="form-control"
                 id="imageInput"
-                onChange={transformImage}
+                onChange={(e) => handlePreviewImg(e)}
               />
             </div>
             <div className="mb-3 border">
-              {!!image && (
-                <img src={image.base64StringImg} alt="product" height={80} />
-              )}
+              {!!image && <img src={image.preview} alt="product" height={80} />}
             </div>
             <button type="submit" className="btn btn-primary">
               Add
@@ -181,72 +267,16 @@ function Products() {
       </div>
     );
   };
-
-  // Process image to base64
-  const transformImage = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = function (e) {
-      const base64String = e.target.result;
-      setImage({
-        file: file,
-        base64StringImg: base64String,
-      });
-    };
-
-    reader.readAsDataURL(file);
-  };
-
-  // Trannsform data to formData
-  function objectToFormData(obj) {
-    const formData = new FormData();
-
-    for (let key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        formData.append(key, obj[key]);
-      }
-    }
-
-    return formData;
-  }
-
-  const handleSubmitForm = (e) => {
-    e.preventDefault();
-
-    const newProduct = {
-      NAME: name,
-      PRICE: price,
-      STOCK: stock,
-      CD: CD,
-      CATEGORY_ID: categoryID,
-      PRODUCT_ATTRIBUTE: [
-        {
-          [KEY]: name,
-          [VALUE]: productAttributes,
-        },
-        {
-          [KEY]: name,
-          [VALUE]: productAttributes,
-        },
-      ],
-    };
-
-    image.file.path = "abc"
-
-    const fileData = new FormData();
-    fileData.append("file", image.file); // Get the req.file ok
-
-    // Post API
-    createNewProduct(fileData);
-  };
-
   return (
     <>
       <div className="menu">
         <div className="add-menu mb-3">
-          <Button className="btn" color="success" onClick={handleOpen}>
-            Add Product
+          <Button
+            className="btn"
+            color={showEdit ? "warning" : "success"}
+            onClick={handleOpen}
+          >
+            {showEdit ? "Edit Product" : "Add Product"}
           </Button>
         </div>
 
@@ -280,59 +310,111 @@ function Products() {
                       </thead>
 
                       <tbody>
-                        {products === null ? (
-                          <tr>
-                            <td>
-                              <h5 className="mt-4">Loading...</h5>
-                            </td>
-                          </tr>
-                        ) : (
-                          products.map((item, index) => (
-                            <tr
-                              className="border-top border-bottom"
-                              key={index}
-                            >
-                              {/* Type product */}
-                              <td>
-                                <div className="p-2 ms-3">
-                                  <h6 className="mb-0">{item.NAME}</h6>
-                                  <span className="text-muted">
-                                    {item.ProductAttributes[0].VALUE}
-                                  </span>
-                                </div>
-                              </td>
-                              <td>
-                                <img
-                                  src={item.IMAGE_PATH}
-                                  alt="Thumbnail"
-                                  height={50}
-                                />
-                              </td>
-                              <td>
-                                <h6 className="ms-4">{item.CATEGORY_ID}</h6>
-                              </td>
-                              <td>
-                                <h6>{item.CD}</h6>
-                              </td>
-                              <td>
-                                <div>
-                                  <h6>Price: {item.PRICE}$</h6>
-                                  <h6>Quantity: {item.STOCK}</h6>
-                                </div>
-                              </td>
-                              <td>
-                                <div>
-                                  <button className="btn btn-primary">
-                                    Edit
-                                  </button>
-                                  <button className="btn btn-danger ms-3">
-                                    Delete
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
+                        {mainAPI === true
+                          ? !!products &&
+                            products.map((item, index) => (
+                              <tr
+                                className="border-top border-bottom"
+                                key={index}
+                              >
+                                {/* Type product */}
+                                <td>
+                                  <div className="p-2 ms-3">
+                                    <h6 className="mb-0">{item.NAME}</h6>
+                                    <span className="text-muted">
+                                      {item.ProductAttributes[0].VALUE}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td>
+                                  <img
+                                    src={item.IMAGE_PATH}
+                                    alt="Thumbnail"
+                                    height={50}
+                                  />
+                                </td>
+                                <td>
+                                  <h6 className="ms-4">{item.CATEGORY_ID}</h6>
+                                </td>
+                                <td>
+                                  <h6>{item.CD}</h6>
+                                </td>
+                                <td>
+                                  <div>
+                                    <h6>Price: {item.PRICE}$</h6>
+                                    <h6>Quantity: {item.STOCK}</h6>
+                                  </div>
+                                </td>
+                                <td>
+                                  <div>
+                                    <button
+                                      className="btn btn-primary"
+                                      onClick={(e) => idData(item.id)}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      className="btn btn-danger ms-3"
+                                      onClick={(e) => handleDelete(item.id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          : !!products &&
+                            products.map((item, index) => (
+                              <tr
+                                className="border-top border-bottom"
+                                key={index}
+                              >
+                                {/* Type product */}
+                                <td>
+                                  <div className="p-2 ms-1">
+                                    <h6 className="mb-0">{item.title}</h6>
+                                    <span className="text-muted">
+                                      {item.description}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td>
+                                  <img
+                                    src={item.image}
+                                    alt="Thumbnail"
+                                    height={50}
+                                  />
+                                </td>
+                                <td>
+                                  <h6 className="ms-4">{item.category}</h6>
+                                </td>
+                                <td>
+                                  <h6>{item.CD}trongnghia</h6>
+                                </td>
+                                <td>
+                                  <div>
+                                    <h6>Price: {item.price}$</h6>
+                                    <h6>Quantity: {item.STOCK}10</h6>
+                                  </div>
+                                </td>
+                                <td>
+                                  <div className="d-flex">
+                                    <button
+                                      className="btn btn-primary"
+                                      onClick={(e) => idData(item.id)}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      className="btn btn-danger ms-3"
+                                      onClick={(e) => handleDelete(item.id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
                       </tbody>
                     </Table>
                   </CardBody>
