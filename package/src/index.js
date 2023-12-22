@@ -7,6 +7,7 @@ import { HashRouter } from "react-router-dom";
 import Loader from "./layouts/loader/Loader";
 import { Provider } from "react-redux";
 import {store} from "./redux/store/store.js";
+import { UserContext } from "./UserContext.js";
 const rootElement = document.getElementById("root");
 const root = createRoot(rootElement);
 
@@ -14,7 +15,9 @@ root.render(
   <Suspense fallback={<Loader />}>
     <HashRouter>
       <Provider store={store}>
-        <App />
+        <UserContext>
+          <App />
+        </UserContext>
       </Provider>
     </HashRouter>
   </Suspense>

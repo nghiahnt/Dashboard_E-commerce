@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { Button, Form, FormGroup, Label, Input } from "reactstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "../redux/store/userSlice";
 import { useNavigate } from "react-router-dom";
+import Cookies from "universal-cookie";
+
+import { loginUser } from "../redux/auth/userSlice";
+
+const cookies = new Cookies(null, { path: "/" });
+
 const Login = () => {
   //state
   const [EMAIL, setEmail] = useState("");
@@ -20,6 +25,10 @@ const Login = () => {
       PASSWORD,
     };
     dispatch(loginUser(userCredentials)).then((result) => {
+      const accessToken = result.payload.status.elements.accessToken;
+      const refreshToken = result.payload.status.elements.refreshToken;
+      cookies.set("accessToken", accessToken);
+      cookies.set("refreshToken", refreshToken);
       if (!result.error) {
         if (result.payload) {
           setEmail("");

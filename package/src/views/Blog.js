@@ -9,26 +9,30 @@ import {
   Table,
 } from "reactstrap";
 import { useState, useEffect } from "react";
+import className from "classnames/bind";
+import Cookies from "universal-cookie";
+import { useDispatch, useSelector } from "react-redux";
 
-import axios from "axios";
-
-import images from "../assets/images/blogs";
 import FormElement from "../components/dashboard/FormElement";
+import styles from "./styles/Blog.module.scss";
+import * as blogActions from "../redux/blog/action";
+
+const cx = className.bind(styles);
+const cookies = new Cookies();
 
 function BlogPage() {
-  // Initialize states
-  const [blogs, setBlogs] = useState([
-    {
-      TITLE: "Bà Na Hill - Đường lên tiên cảnh",
-      DESC: "There’s not really best or worst time to visit Bana Hills, with travel possible all year round. If you desire to have great photos of Legendary Golden Bridge, April – August is your perfect time but be aware of thousands visitors.",
-      image: images.thumbnail,
-      id: 1,
-    },
-  ]);
-  const [blogById, setBlogById] = useState();
+  // Redux
+  const dispatch = useDispatch();
+  const blogs = useSelector((state) => state.blogs.blogs);
+  const blog = useSelector((state) => state.blogs.blog);
+  const message = useSelector((state) => state.blogs.message);
+
+  if (message) {
+    window.alert(message);
+    window.location.reload();
+  }
   const [show, setShow] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-  const [id, setId] = useState();
 
   // Blog states
   const [title, setTitle] = useState("");
@@ -38,18 +42,28 @@ function BlogPage() {
   const handleChangeTitle = (e) => {
     setTitle(e.target.value);
   };
-  const handleChangeDescription = (e) => {
-    setDescription(e.target.value);
+
+  const [countChar, setCountChar] = useState(0);
+  const handleInputChange = (event) => {
+    const inputValue = event.target.value;
+    setCountChar(inputValue);
+    if (countChar >= 75) {
+      // Maximum length
+      setDescription(inputValue + "\n"); // Append a newline character
+      setCountChar(0);
+    } else {
+      setDescription(inputValue);
+    }
   };
   const handleChangeImage = (e) => {
     const file = e.target.files[0];
-    file.path = URL.createObjectURL(file); // Create Blob image
+    file.preview = URL.createObjectURL(file); // Create Blob image
     setImage(file);
   };
   // Remove blob image
   useEffect(() => {
     return () => {
-      image && URL.revokeObjectURL(image.preview);
+      image && URL.revokeObjectURL(image.path);
     };
   }, [image]);
 
@@ -61,83 +75,49 @@ function BlogPage() {
     }
   };
 
-  const idData = (id) => {
-    setId(id);
-    setShowEdit(true);
-    setShow(true);
-    // Get blog by id
-    axios
-      .get(`https://ecommerce-camping.onrender.com/api/blog/getBlogId/${id}`)
-      .then((res) => {
-        setBlogById(res.data.elements);
-      })
-      .catch((err) => console.log("Error: ", err));
-  };
+  useEffect(() => {
+    setTitle(blog.TITLE);
+    setDescription(blog.DESC);
+    setImage({ preview: blog.IMAGE_PATH });
+  }, [blog]);
 
   // Handler API
   // Get Blogs
   useEffect(() => {
-    axios
-      .get("https://ecommerce-camping.onrender.com/api/blog/getAllBlog")
-      .then((res) => {
-        // setBlogs(res.data);
-        console.log("Get blog finished", res.data.elements);
-      })
-      .catch((err) => console.log("Error: ", err));
-  }, [blogs]);
+    dispatch(blogActions.getAllBlog());
+  }, [dispatch]);
 
   // Post Blogs
   const addNewBlog = (data) => {
-    axios
-      .post("https://ecommerce-camping.onrender.com/api/blog/createBlog", data)
-      .then((res) => {
-        window.alert("Blog created successfully");
-        setBlogs(""); // Re-render the blog
-        console.log(res.data.elements);
-      })
-      .catch((err) => console.log("Error: ", err));
+    dispatch(blogActions.createBlog(data));
   };
 
-  // Edit Blog
-  const editBlog = (id, data) => {
-    axios
-      .patch(
-        `https://ecommerce-camping.onrender.com/api/blog/updateBlog/${id}`,
-        data
-      )
-      .then((res) => {
-        window.alert("Blog updated successfully");
-        setBlogs(""); // Re-render the blog
-        console.log(res.data);
-      });
+  const handleEditBlog = (id) => {
+    setShowEdit(true);
+    setShow(true);
+    cookies.set("blogId", id);
+    dispatch(blogActions.getBlogById(id));
   };
 
   // Delete Blog
   const deleteBlog = (id) => {
-    axios
-      .delete(
-        `https://ecommerce-camping.onrender.com/api/blog/deleteBlog/${id}`
-      )
-      .then((res) => {
-        console.log(res.data);
-        window.alert("Blog deleted successfully");
-        setBlogs(""); // Re-render the blog
-      })
-      .catch((err) => console.log("Error: ", err));
+    dispatch(blogActions.deleteBlog(id));
   };
 
   // Handle submit button
   const handleSubmit = (e) => {
     e.preventDefault();
-    const formData = new FormData();
     // Add blog - data
     if (!showEdit) {
       const newBlog = {
         TITLE: title,
         DESC: description,
+        image: image,
       };
-      formData.append("body", newBlog);
-      formData.append("file", image);
+      const formData = new FormData();
+      for (const key in newBlog) {
+        formData.append(key, newBlog[key]);
+      }
       addNewBlog(formData);
     }
     // Edit blog - data
@@ -145,10 +125,13 @@ function BlogPage() {
       const editedBlog = {
         TITLE: title,
         DESC: description,
+        image: image,
       };
-      formData.append("body", editedBlog);
-      formData.append("file", image);
-      editBlog(id, formData);
+      const formData = new FormData();
+      for (const key in editedBlog) {
+        formData.append(key, editedBlog[key]);
+      }
+      dispatch(blogActions.updateBlog(formData));
     }
   };
 
@@ -179,12 +162,12 @@ function BlogPage() {
                   value={title}
                   onChange={handleChangeTitle}
                 />
-                <FormElement
-                  name="Description"
+                <textarea
                   type="text"
-                  placeholder="Enter description..."
+                  placeholder="Write content here..."
                   value={description}
-                  onChange={handleChangeDescription}
+                  className={cx("textArea", "w-100 rounded")}
+                  onChange={handleInputChange}
                 />
                 <FormElement
                   name="Image"
@@ -192,13 +175,22 @@ function BlogPage() {
                   onChange={handleChangeImage}
                 />
                 <div className="mb-3 border">
-                  {image && (
+                  {showEdit ? (
                     <img
-                      src={image.path}
-                      alt="product"
+                      src={blog && image.preview}
+                      alt="thumbnail"
                       height={80}
                       className="my-2"
                     />
+                  ) : (
+                    image && (
+                      <img
+                        src={image.path}
+                        alt="thumbnail"
+                        height={80}
+                        className="my-2"
+                      />
+                    )
                   )}
                 </div>
                 <button type="submit" className="btn btn-primary">
@@ -251,7 +243,7 @@ function BlogPage() {
                             <td>
                               <div>
                                 <img
-                                  src={item.image}
+                                  src={item.IMAGE_PATH}
                                   alt="Thumbnail"
                                   height={50}
                                 />
@@ -264,11 +256,14 @@ function BlogPage() {
                               <div className="d-flex">
                                 <button
                                   className="btn btn-warning"
-                                  onClick={() => idData(item.id)}
+                                  onClick={() => handleEditBlog(item.id)}
                                 >
                                   Edit
                                 </button>
-                                <button className="btn btn-danger ms-3" onClick={() => deleteBlog(item.id)}>
+                                <button
+                                  className="btn btn-danger ms-3"
+                                  onClick={() => deleteBlog(item.id)}
+                                >
                                   Delete
                                 </button>
                               </div>

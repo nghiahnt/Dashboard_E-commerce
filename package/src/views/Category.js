@@ -1,4 +1,3 @@
-// import ProjectTables from "../components/dashboard/ProjectTable";
 import {
   Row,
   Button,
@@ -9,94 +8,43 @@ import {
   CardSubtitle,
   Table,
 } from "reactstrap";
-
-import axios from "axios";
 import { useEffect, useState } from "react";
-const Menu = () => {
-  // Id category
-  const [id, setId] = useState(null);
+import { useDispatch, useSelector } from "react-redux";
+import * as categoryActions from "../redux/category/action";
+import classNames from "classnames/bind";
+import Cookies from "universal-cookie/es6";
 
-  // Add categories
+import FormControl from "../components/dashboard/FormControl";
+import FormElement from "../components/dashboard/FormElement";
+
+const cx = classNames.bind();
+const cookie = new Cookies();
+
+const Menu = () => {
+  // Redux
+  const dispatch = useDispatch();
+  let categories = useSelector((state) => state.categories.categories);
+  // const message = useSelector((state) => state.categories.message);
+  const category = useSelector((state) => state.categories.category);
+
+  let PARENT_ID = !!categories && [
+    ...new Set(categories.map((item) => item.PARENT_ID)),
+  ];
+
   const [show, setShow] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const handleShow = () => {
+    setShow(!show);
+    if (showEdit === true) {
+      setShow(false);
+      setShowEdit(false);
+    }
+  };
 
   // Categories
   const [title, setTitle] = useState("");
-  const [parentID, setParentID] = useState("");
+  const [parentID, setParentID] = useState(0);
   const [CD, setCD] = useState("");
-
-  // Category by id
-  const [categoryId, setCategoryId] = useState(null);
-
-  // Form add categories
-  const renderAddForm = (data) => {
-    console.log(parentID);
-    return (
-      <div className="card mt-4">
-        <div className="card-body">
-          <h4 className="card-title">
-            {showEdit ? "Edit Category" : "Add category"}
-          </h4>
-          <form onSubmit={handleSubmitForm}>
-            <div className="mb-3">
-              <label htmlFor="titleInput" className="form-label">
-                Title
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                id="titleInput"
-                placeholder="Enter title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <div className="mb-3">
-              <label htmlFor="parentIdInput" className="form-label">
-                Parent ID
-              </label>
-              <select
-                className="form-control"
-                id="parentIdInput"
-                value={parentID}
-                onChange={(e) => setParentID(e.target.value)}
-              >
-                {data.map((item, index) => (
-                  <option value={item.PARENT_ID} key={index}>
-                    {item.PARENT_ID}
-                  </option>
-                ))}
-              </select>
-              {/* <input
-                type="text"
-                className="form-control"
-                id="parentIdInput"
-                placeholder="Enter parent ID"
-                value={parentID}
-                onChange={(e) => setParentID(e.target.value)}
-              /> */}
-            </div>
-            <div className="mb-3">
-              <label htmlFor="cdInput" className="form-label">
-                CD
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                id="cdInput"
-                placeholder="Enter CD"
-                value={CD}
-                onChange={(e) => setCD(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary">
-              Add
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  };
 
   // Handler
   // Handle submitform
@@ -109,116 +57,123 @@ const Menu = () => {
         PARENT_ID: parentID,
         CD: CD,
       };
-      console.log(id);
-      console.log(editData);
-      const response = await axios.patch(
-        `https://ecommerce-camping.onrender.com/api/category/updateCategory/${id}`,
-        editData
-      );
-      const resData = await response.data;
-      console.log(resData);
-      setShow(false);
-      window.alert("Message", "Updated category successfully");
-      window.location.reload();
+      dispatch(categoryActions.updateCategory(editData))
+        .then((res) => {
+          window.alert(res.payload.message);
+          window.location.reload();
+        })
     } else {
+      // Add form
       const newCategory = {
         TITLE: title,
         PARENT_ID: parentID,
         CD: CD,
       };
-
-      createCategory(newCategory);
-      // console.log(newCategory);
+      handleAddCategory(newCategory);
     }
+  };
+
+  // Get category
+  useEffect(() => {
+    dispatch(categoryActions.getAllCategories());
+  }, [dispatch]);
+
+  useEffect(() => {
+    setTitle(category.TITLE);
+    setParentID(category.PARENT_ID);
+  }, [category]);
+
+  // Add new category
+  const handleAddCategory = (data) => {
+    dispatch(categoryActions.addCategory(data)).then((res) => {
+      window.alert(res.payload.message);
+      setShow(false);
+      window.location.reload();
+    });
+  };
+
+  // Handle delete form
+  const handleDelete = (id) => {
+    dispatch(categoryActions.removeCategory(id)).then((res) => {
+      window.alert(res.payload.message);
+      window.location.reload();
+    });
   };
 
   // Handle Edit
   const handleEdit = async (id) => {
-    setShow(!show);
-    show ? setShowEdit(false) : setShowEdit(true);
-    setId(id);
-
-    try {
-      // Get the category follow id
-      const res = await axios.get(
-        `https://ecommerce-camping.onrender.com/api/category/getCategoryId/${id}`
-      );
-      setCategoryId(res.data.elements);
-    } catch (error) {
-      console.log(error);
-    }
-    if (!!categoryId) {
-      setTitle(categoryId.TITLE);
-      setParentID(categoryId.PARENT_ID);
-      setCD(categoryId.CD);
-    }
-  };
-
-  // Handle Delete
-  const handleDelete = async (id) => {
-    console.log(id); // ok
-    try {
-      const res = await axios.delete(
-        `https://ecommerce-camping.onrender.com/api/category/deleteCategory/${id}`
-      );
-      console.log("Delete category successfully", res.data);
-      window.alert("Notification", "Delete category successfully");
-      window.location.reload();
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const handleShow = () => {
-    setShow(!show);
-  };
-
-  // Get category
-  const [category, setCategory] = useState(null);
-  console.log(category);
-  useEffect(() => {
-    const fetchCategory = async () => {
-      try {
-        await axios
-          .get(
-            "https://ecommerce-camping.onrender.com/api/category/getAllCategory"
-          )
-          .then((res) => {
-            setCategory(res.data.elements);
-          });
-      } catch (error) {
-        console.log("Error during fetching category:", error);
-      }
-    };
-
-    fetchCategory();
-  }, [show]);
-
-  // Create new category
-  const createCategory = async (categoryData) => {
-    try {
-      const response = await axios.post(
-        "https://ecommerce-camping.onrender.com/api/category/createCategory",
-        categoryData
-      );
-      alert("Add category successfully");
-      setShow(false);
-      const data = await response.data;
-      console.log("Category created:", data);
-    } catch (error) {
-      console.error("Error creating category:", error);
-    }
+    cookie.set("categoryId", id);
+    dispatch(categoryActions.getCategoryById(id))
+    setShow(true);
+    setShowEdit(true);
   };
 
   return (
     <div className="menu">
       <div className="add-menu mb-2">
-        <Button className="btn" color="success" onClick={handleShow}>
+        <Button
+          className="btn"
+          color={showEdit ? "warning" : "success"}
+          onClick={handleShow}
+        >
           {showEdit ? "Edit Category" : "Add Category"}
         </Button>
       </div>
 
-      {show && renderAddForm(category)}
+      {show && (
+        <FormControl>
+          <h4 className="card-title">
+            {showEdit ? "Edit Category" : "Add category"}
+          </h4>
+          <form onSubmit={handleSubmitForm}>
+            <FormElement
+              name="title"
+              type="text"
+              placeholder="Enter title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <div className="mb-3">
+              <label htmlFor="parentIdInput" className="form-label">
+                Parent ID
+              </label>
+              <select
+                className="form-control"
+                id="parentIdInput"
+                onChange={(e) => setParentID(e.target.value)}
+              >
+                {/* <option>--Choose the ParentID--</option> */}
+                {showEdit ? (
+                  PARENT_ID.map((value) => <option key={value}>{value}</option>)
+                ) : PARENT_ID.length !== 0 ? (
+                  PARENT_ID.map((value) => <option key={value}>{value}</option>)
+                ) : (
+                  <>
+                    <option>0</option>
+                    <option>1</option>
+                  </>
+                )}
+              </select>
+            </div>
+            <FormElement
+              name="CD"
+              type="text"
+              placeholder="Enter CD"
+              value={CD}
+              onChange={(e) => setCD(e.target.value)}
+            />
+            <button
+              type="submit"
+              className={cx("btn", {
+                "btn-warning": showEdit,
+                "btn-success": !showEdit,
+              })}
+            >
+              {showEdit ? "Edit category" : "Add category"}
+            </button>
+          </form>
+        </FormControl>
+      )}
 
       <div className="menu-table">
         <div className="box-menu-table">
@@ -241,48 +196,20 @@ const Menu = () => {
                       <tr>
                         <th>Type Category</th>
                         <th>CategoryID</th>
-                        <th>The number of products</th>
                         <th>CD</th>
-                        <th>Status</th>
+                        <th>Management</th>
                       </tr>
                     </thead>
 
                     <tbody>
-                      <tr className="border-top border-bottom">
-                        <td>
-                          <div className="p-2 ms-3">
-                            <h6 className="mb-0">Men's Clothing</h6>
-                            <span className="text-muted">Description text</span>
-                          </div>
-                        </td>
-                        <td>
-                          <h6>ExampleID</h6>
-                        </td>
-                        <td>
-                          <h6 className="ms-5">10</h6>
-                        </td>
-                        <td>
-                          <h6>trongnghia</h6>
-                        </td>
-                        <td className="d-flex justify-content-between">
-                          <h6>Almost out of stock</h6>
-                          <div>
-                            <button className="btn btn-primary">Edit</button>
-                            <button className="btn btn-danger ms-3">
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-
-                      {category === null ? (
+                      {!categories ? (
                         <tr>
                           <td>
                             <h5 className="mt-4">Loading...</h5>
                           </td>
                         </tr>
                       ) : (
-                        category.map((item, index) => {
+                        categories.map((item, index) => {
                           return (
                             <tr
                               key={index}
@@ -291,25 +218,21 @@ const Menu = () => {
                               <td>
                                 <div className="p-2 ms-3">
                                   <h6 className="mb-0">{item.TITLE}</h6>
-                                  <span className="text-muted">
+                                  {/* <span className="text-muted">
                                     Description text
-                                  </span>
+                                  </span> */}
                                 </div>
                               </td>
                               <td>
                                 <h6 className="ms-4">{item.id}</h6>
                               </td>
                               <td>
-                                <h6 className="ms-5">10</h6>
-                              </td>
-                              <td>
                                 <h6>{item.CD}</h6>
                               </td>
                               <td className="d-flex justify-content-between">
-                                <h6>Almost out of stock</h6>
                                 <div>
                                   <button
-                                    className="btn btn-primary"
+                                    className="btn btn-warning"
                                     onClick={() => handleEdit(item.id)}
                                   >
                                     Edit

@@ -8,18 +8,19 @@ const FullLayout = lazy(() => import("../layouts/FullLayout.js"));
 
 const Dashboard = lazy(() => import("../views/Dashboard.js"));
 const About = lazy(() => import("../views/About.js"));
-const Alerts = lazy(() => import("../views/ui/Alerts"));
-const Badges = lazy(() => import("../views/ui/Badges"));
-const Buttons = lazy(() => import("../views/ui/Buttons"));
-const Cards = lazy(() => import("../views/ui/Cards"));
-const Grid = lazy(() => import("../views/ui/Grid"));
-const Tables = lazy(() => import("../views/ui/Tables"));
-const Forms = lazy(() => import("../views/ui/Forms"));
+const Alerts = lazy(() => import("../views/ui/Alerts.js"));
+const Badges = lazy(() => import("../views/ui/Badges.js"));
+const Buttons = lazy(() => import("../views/ui/Buttons.js"));
+const Cards = lazy(() => import("../views/ui/Cards.js"));
+const Grid = lazy(() => import("../views/ui/Grid.js"));
+const Tables = lazy(() => import("../views/ui/Tables.js"));
+const Forms = lazy(() => import("../views/ui/Forms.js"));
 const Login = lazy(() => import("../views/Login.js"));
 const Menu = lazy(() => import("../views/Menu.js"));
 const Category = lazy(() => import("../views/Category.js"));
 const Products = lazy(() => import("../views/Products.js"));
 const Blog = lazy(() => import("../views/Blog.js"))
+const Profile = lazy(() => import ("../views/Profile.js"));
 /*****Routes******/
 
 const ThemeRoutes = [
@@ -45,6 +46,7 @@ const ThemeRoutes = [
       { path: "/forms", exact: true, element: <Forms /> },
       { path: "/product", exact: true, element: <Products /> },
       { path: "/blog", exact: true, element: <Blog /> },
+      { path: "/users", exact: true, element: <Profile /> },
     ],
   },
 ];

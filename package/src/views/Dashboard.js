@@ -3,8 +3,19 @@ import SalesChart from "../components/dashboard/SalesChart";
 import Feeds from "../components/dashboard/Feeds";
 import ProjectTables from "../components/dashboard/ProjectTable";
 import TopCards from "../components/dashboard/TopCards";
+import { useContext } from "react";
+
+import DecodeToken from "../utils/decodeToken";
+import { UserType } from "../UserContext";
 
 const Starter = () => {
+  const {setUserId} = useContext(UserType);
+  DecodeToken("accessToken").then((id) => {
+    setUserId(id);
+  })
+  // Decode token
+
+
   return (
     <div>
       {/***Top Cards***/}
