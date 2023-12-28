@@ -23,14 +23,33 @@ const navigation = [
     href: "/product",
     icon: "bi bi-handbag",
   },
-
+  {
+    title: "Order",
+    href: "/order",
+    icon: "bi bi-cart",
+  },
   {
     title: "Blog",
     href: "/Blog",
     icon: "bi bi-book",
   },
   {
-    title: "Users",
+    title: "Discount Type",
+    href: "/discountType",
+    icon: "bi bi-cash-coin",
+  },
+  {
+    title: "Discount",
+    href: "/discount",
+    icon: "bi bi-cash-coin",
+  },
+  {
+    title: "Game card",
+    href: "gameCard",
+    icon: "bi bi-controller",
+  },
+  {
+    title: "Profile",
     href: "/users",
     icon: "bi bi-people",
   },

@@ -19,8 +19,12 @@ const Login = lazy(() => import("../views/Login.js"));
 const Menu = lazy(() => import("../views/Menu.js"));
 const Category = lazy(() => import("../views/Category.js"));
 const Products = lazy(() => import("../views/Products.js"));
-const Blog = lazy(() => import("../views/Blog.js"))
-const Profile = lazy(() => import ("../views/Profile.js"));
+const Blog = lazy(() => import("../views/Blog.js"));
+const Profile = lazy(() => import("../views/Profile.js"));
+const Order = lazy(() => import("../views/Order.js"));
+const Discount = lazy(() => import("../views/Discount.js"));
+const DiscountType = lazy(() => import("../views/DiscountType.js"));
+const GameCard = lazy(() => import("../views/GameCard.js"));
 /*****Routes******/
 
 const ThemeRoutes = [
@@ -47,6 +51,10 @@ const ThemeRoutes = [
       { path: "/product", exact: true, element: <Products /> },
       { path: "/blog", exact: true, element: <Blog /> },
       { path: "/users", exact: true, element: <Profile /> },
+      { path: "/order", exact: true, element: <Order /> },
+      { path: "/discountType", exact: true, element: <DiscountType /> },
+      { path: "/discount", exact: true, element: <Discount /> },
+      { path: "gameCard", exact: true, element: <GameCard /> },
     ],
   },
 ];

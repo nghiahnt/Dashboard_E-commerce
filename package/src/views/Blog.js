@@ -63,7 +63,7 @@ function BlogPage() {
   // Remove blob image
   useEffect(() => {
     return () => {
-      image && URL.revokeObjectURL(image.path);
+      image && URL.revokeObjectURL(image.preview);
     };
   }, [image]);
 
@@ -174,7 +174,7 @@ function BlogPage() {
                   type="file"
                   onChange={handleChangeImage}
                 />
-                <div className="mb-3 border">
+                <div className="mb-4">
                   {showEdit ? (
                     <img
                       src={blog && image.preview}
@@ -183,9 +183,9 @@ function BlogPage() {
                       className="my-2"
                     />
                   ) : (
-                    image && (
+                    !!image === true && (
                       <img
-                        src={image.path}
+                        src={image.preview}
                         alt="thumbnail"
                         height={80}
                         className="my-2"
@@ -212,7 +212,7 @@ function BlogPage() {
                   </CardSubtitle>
 
                   <Table
-                    className="no-wrap mt-3 algin-middle border-bottom"
+                    className="no-wrap mt-3 algin-middle"
                     responsive
                     borderless
                   >
@@ -225,9 +225,9 @@ function BlogPage() {
                       </tr>
                     </thead>
 
-                    {!blogs ? (
+                    {blogs.lenght === 0 ? (
                       <tbody>
-                        <tr>
+                        <tr className="border-top border-bottom">
                           <td>
                             <h5>Loading...</h5>
                           </td>

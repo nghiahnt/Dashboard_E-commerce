@@ -47,6 +47,6 @@ export const updateCategory = async (data) => {
         );
         return res;
     } catch (error) {
-        
+        console.log(error);
     }
 }
